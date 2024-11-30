@@ -5,14 +5,15 @@
 #include <string>
 #include <vector>
 
-
-class TCPSender{
+class TCPSender {
 public:
     TCPSender(const std::string& address, unsigned short port);
     ~TCPSender();
 
-    void start() ;
+    void start();
     void send(const std::vector<unsigned char>& data);
+
+    bool isConnected() const;
 
 private:
     boost::asio::io_context ioContext_;
@@ -20,6 +21,5 @@ private:
     boost::asio::ip::tcp::endpoint endpoint_;
     bool isConnected_;
 };
-
 
 #endif // TCP_SENDER_HPP

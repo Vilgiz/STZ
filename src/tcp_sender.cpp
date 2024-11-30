@@ -1,5 +1,7 @@
 #include "tcp_sender.hpp"
 #include "logger.hpp"
+#include <thread>
+#include <chrono>
 
 TCPSender::TCPSender(const std::string& address, unsigned short port)
     : socket_(ioContext_),
@@ -10,7 +12,7 @@ TCPSender::TCPSender(const std::string& address, unsigned short port)
 
 TCPSender::~TCPSender() {
     try {
-      if (socket_.is_open()) {
+        if (socket_.is_open()) {
             socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
             socket_.close();
             Logger::getInstance().log("TCP socket closed.");
@@ -23,7 +25,7 @@ TCPSender::~TCPSender() {
 void TCPSender::start() {
     try {
         socket_.connect(endpoint_);
-        isConnected_=true;
+        isConnected_ = true;
         Logger::getInstance().log("TCP connection established with " +
                                    endpoint_.address().to_string() + ":" +
                                    std::to_string(endpoint_.port()));
@@ -33,14 +35,20 @@ void TCPSender::start() {
     }
 }
 
-
 void TCPSender::send(const std::vector<unsigned char>& data) {
+    if (!isConnected_) {
+        throw std::runtime_error("Cannot send data: socket is not connected.");
+    }
+
     try {
-        if (isConnected_ && socket_.is_open()) {
-            boost::asio::write(socket_, boost::asio::buffer(data));
-        }
+        boost::asio::write(socket_, boost::asio::buffer(data));
     } catch (const boost::system::system_error& e) {
         Logger::getInstance().log("Error in TCPSender::send: " + std::string(e.what()));
-        isConnected_ = false; // Сбрасываем флаг, если соединение разорвано
+        isConnected_ = false;
+        throw;
     }
+}
+
+bool TCPSender::isConnected() const {
+    return isConnected_;
 }

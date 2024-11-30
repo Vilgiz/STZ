@@ -6,21 +6,26 @@ using json = nlohmann::json;
 
 VideoSender::VideoSender(const std::string& address,
                          unsigned short port,
-                         unsigned short cameraIndex
-                         )
-    : address_(address), port_(port), cameraIndex_(cameraIndex), sender_(address, port) {
-    Logger::getInstance().log("VideoSender initialized with TCP on " + address + ":" + std::to_string(port));
-}
-
-
+                         unsigned short cameraIndex)
+    : address_(address), port_(port), cameraIndex_(cameraIndex), sender_(address, port) {}
 
 void VideoSender::start() {
     Logger::getInstance().log("Starting VideoSender");
     stopFlag = false;
 
+    std::thread connectionThread([this]() {
+        sender_.start();
+        {
+            std::lock_guard<std::mutex> lock(connectionMutex_);
+            isConnectionReady_ = true;
+        }
+        connectionCondVar_.notify_all();
+    });
+
     std::thread captureThread(&VideoSender::captureFrame, this);
     std::thread sendThread(&VideoSender::sendFrame, this);
 
+    connectionThread.join();
     captureThread.join();
     sendThread.join();
 }
@@ -28,18 +33,22 @@ void VideoSender::start() {
 void VideoSender::stop() {
     stopFlag = true;
     frameCondVar_.notify_all();
+    connectionCondVar_.notify_all();
 }
 
 void VideoSender::captureFrame() {
+    {
+        std::unique_lock<std::mutex> lock(connectionMutex_);
+        connectionCondVar_.wait(lock, [this]() { return isConnectionReady_ || stopFlag; });
+    }
+
     Camera camera;
 
     while (!stopFlag) {
         cv::Mat frame = camera.getImage();
 
         Image image(frame);
-
-        //frame = image.transformZone(frame);      // Transform zone
-        frame = image.imageCorrection(frame);    // Correct image
+        frame = image.imageCorrection(frame);
         std::vector<cv::Point> coordinates;
         std::vector<std::string> angles;
         std::vector<std::vector<cv::Point>> contours;
@@ -55,11 +64,15 @@ void VideoSender::captureFrame() {
                 frameCondVar_.notify_one();
             }
         }
-        
     }
 }
 
 void VideoSender::sendFrame() {
+    {
+        std::unique_lock<std::mutex> lock(connectionMutex_);
+        connectionCondVar_.wait(lock, [this]() { return isConnectionReady_ || stopFlag; });
+    }
+
     while (!stopFlag) {
         std::shared_ptr<cv::Mat> frameToSend;
 
@@ -95,7 +108,6 @@ void VideoSender::sendFrame() {
 nlohmann::json VideoSender::generateMetadata() {
     return {
         {"timestamp", static_cast<long>(time(nullptr))},
-        {"frame_size", buffer_.size()}
+        {"frame_size", 10}
     };
 }
-

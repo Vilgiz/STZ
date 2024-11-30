@@ -15,7 +15,7 @@ void DataForwarder::start() {
     {
         std::unique_lock<std::mutex> lock(serverReadyMutex);
         serverReadyCondVar.wait(lock, [this]() {
-            return serversReady == 2; // Оба сервера должны быть готовы
+            return serversReady == 2;
         });
     }
 
@@ -58,7 +58,6 @@ void DataForwarder::receiveAndDistributeData() {
             // Найти разделитель (нулевой байт)
             auto separatorPos = std::find(data.begin(), data.end(), 0);
             if (separatorPos == data.end()) {
-                Logger::getInstance().log("Error: No metadata separator found!");
                 continue;
             }
 

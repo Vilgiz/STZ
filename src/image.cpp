@@ -1,8 +1,6 @@
 #include "image.hpp"
 
-Image::Image(const cv::Mat& frame) : frame(frame) {
-    Logger::getInstance().log("Image object initialized.");
-}
+Image::Image(const cv::Mat& frame) : frame(frame) {}
 
 cv::Mat Image::transformZone(const cv::Mat& frame) {
     std::ifstream file("transformation_data.json");
@@ -28,8 +26,6 @@ cv::Mat Image::transformZone(const cv::Mat& frame) {
 
     cv::Mat output;
     cv::warpPerspective(frame, output, M, cv::Size(maxWidth, maxHeight));
-
-    Logger::getInstance().log("Transform zone applied successfully.");
     return output;
 }
 
@@ -60,8 +56,6 @@ cv::Mat Image::transformChees(const cv::Mat& frame) {
 
     cv::Mat output;
     cv::undistort(frame, output, cameraMatrix, distCoefficients);
-
-    Logger::getInstance().log("Transform Chees applied successfully.");
     return output;
 }
 
@@ -75,7 +69,6 @@ cv::Mat Image::imageCorrection(const cv::Mat& frame) {
 
     cv::medianBlur(corrected, corrected, 3);
 
-    Logger::getInstance().log("Image correction applied successfully.");
     return corrected;
 }
 
@@ -111,8 +104,6 @@ cv::Mat Image::detectContours(cv::Mat& frame, std::vector<cv::Point>& coordinate
             }
         }
     }
-
-    Logger::getInstance().log("Contours detected successfully.");
     return frame;
 }
 
@@ -132,7 +123,6 @@ cv::Mat Image::drawContours(cv::Mat& frame, const std::vector<std::vector<cv::Po
         }
     }
 
-    Logger::getInstance().log("Contours drawn successfully.");
     return frame;
 }
 

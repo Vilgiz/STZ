@@ -4,4 +4,5 @@ client_port: 12347
 targetFPS: 30
 videoWidth: 1280
 videoHeight: 720
-ip_address: "127.0.0.1"
+ip_address: "192.168.1.242"
+cameraIndex: 0

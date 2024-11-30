@@ -18,24 +18,13 @@ cv::Mat Camera::getImage() {
     cv::Mat frame;
     if (capture_.isOpened()) {
         capture_ >> frame;
-        if (frame.empty()) {
-            Logger::getInstance().log("Captured frame is empty.");
-        } else {
-            Logger::getInstance().log("Captured frame successfully.");
-        }
-    } else {
-        Logger::getInstance().log("Camera is not opened.");
-        std::cerr << "Camera is not opened." << std::endl;
-    }
     return frame;
+    }
 }
 
 void Camera::show(const cv::Mat& frame) {
     if (!frame.empty()) {
         cv::imshow("Camera Feed", frame);
-        Logger::getInstance().log("Displayed frame in window.");
-    } else {
-        Logger::getInstance().log("Attempted to display an empty frame.");
     }
 }
 

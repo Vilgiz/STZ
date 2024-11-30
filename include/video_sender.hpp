@@ -21,44 +21,31 @@ public:
                 unsigned short port,
                 unsigned short cameraIndex);
 
-    // Запуск видеопередачи
     void start();
-
-    // Завершение работы
     void stop();
 
 private:
-    // Поток захвата кадров
     void captureFrame();
-
-    // Поток отправки кадров
     void sendFrame();
-
-    // Генерация метаданных для кадра
     nlohmann::json generateMetadata();
 
-    // Поля для настройки и управления
-    
-    std::string address_;                 // IP-адрес получателя
-    unsigned short port_;                 // Порт получателя
-    unsigned short cameraIndex_;          // Индекс камеры
-    std::atomic<bool> stopFlag{false};    // Флаг завершения потоков
-
+    std::string address_;
+    unsigned short port_;
+    unsigned short cameraIndex_;
+    std::atomic<bool> stopFlag{false};
     TCPSender sender_;
 
-    // Параметры компрессии
     std::vector<int> compression_params_ = {cv::IMWRITE_JPEG_QUALITY, 90};
 
-    // Очередь для кадров
-    std::queue<std::shared_ptr<cv::Mat>> frameQueue_; // Очередь для хранения кадров
-    size_t maxQueueSize_ = 10;            // Максимальный размер очереди
+    std::queue<std::shared_ptr<cv::Mat>> frameQueue_;
+    size_t maxQueueSize_ = 10;
 
-    // Синхронизация потоков
-    std::mutex frameQueueMutex_;          // Мьютекс для очереди
-    std::condition_variable frameCondVar_; // Условная переменная для синхронизации
+    std::mutex frameQueueMutex_;
+    std::condition_variable frameCondVar_;
 
-    // Вспомогательные данные
-    std::vector<unsigned char> buffer_;  // Буфер для кодированного изображения
+    std::mutex connectionMutex_;                  // Мьютекс для ожидания подключения
+    std::condition_variable connectionCondVar_;   // Условная переменная для ожидания подключения
+    bool isConnectionReady_ = false;              // Флаг состояния подключения
 };
 
 #endif // VIDEO_SENDER_HPP

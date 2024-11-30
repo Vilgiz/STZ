@@ -9,9 +9,9 @@ int main() {
         YAML::Node config = YAML::LoadFile(config_path);
 
         // Чтение параметров из конфигурации
-        unsigned short port = config["port"].as<unsigned short>();
+        unsigned short port = config["cv_port"].as<unsigned short>();
         std::string ip_address = config["ip_address"].as<std::string>();
-        unsigned short cameraIndex = config["videoSource"].as<unsigned short>();
+        unsigned short cameraIndex = config["cameraIndex"].as<unsigned short>();
 
         VideoSender sender(ip_address, port, cameraIndex);
         sender.start();
