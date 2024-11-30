@@ -1,0 +1,7 @@
+cv_port: 12345
+robot_port: 12346
+client_port: 12347
+targetFPS: 30
+videoWidth: 1280
+videoHeight: 720
+ip_address: "127.0.0.1"
