@@ -43,37 +43,34 @@ public:
     }
 
     inline cv::Mat transformChees(const cv::Mat& frame) {
-    std::ifstream file("calibration_result.json");
-    if (!file.is_open()) {
-        throw std::runtime_error("Error opening calibration_result.json");
-    }
-
-    json data;
-    file >> data;
-
-    // Чтение матрицы камеры
-    auto camera_matrix_data = data["camera_matrix"].get<std::vector<std::vector<double>>>();
-    cv::Mat cameraMatrix = cv::Mat(camera_matrix_data.size(), camera_matrix_data[0].size(), CV_64F);
-
-    for (size_t i = 0; i < camera_matrix_data.size(); ++i) {
-        for (size_t j = 0; j < camera_matrix_data[i].size(); ++j) {
-            cameraMatrix.at<double>(i, j) = camera_matrix_data[i][j];
+        std::ifstream file("calibration_result.json");
+        if (!file.is_open()) {
+            throw std::runtime_error("Error opening calibration_result.json");
         }
+
+        json data;
+        file >> data;
+
+        auto camera_matrix_data = data["camera_matrix"].get<std::vector<std::vector<double>>>();
+        cv::Mat cameraMatrix = cv::Mat(camera_matrix_data.size(), camera_matrix_data[0].size(), CV_64F);
+
+        for (size_t i = 0; i < camera_matrix_data.size(); ++i) {
+            for (size_t j = 0; j < camera_matrix_data[i].size(); ++j) {
+                cameraMatrix.at<double>(i, j) = camera_matrix_data[i][j];
+            }
+        }
+
+        auto dist_coefficients_data = data["dist_coefficients"].get<std::vector<double>>();
+        cv::Mat distCoefficients = cv::Mat(1, dist_coefficients_data.size(), CV_64F);
+        for (size_t i = 0; i < dist_coefficients_data.size(); ++i) {
+            distCoefficients.at<double>(0, i) = dist_coefficients_data[i];
+        }
+
+        cv::Mat output;
+        cv::undistort(frame, output, cameraMatrix, distCoefficients);
+
+        return output;
     }
-
-    // Чтение коэффициентов дисторсии
-    auto dist_coefficients_data = data["dist_coefficients"].get<std::vector<double>>();
-    cv::Mat distCoefficients = cv::Mat(1, dist_coefficients_data.size(), CV_64F);
-    for (size_t i = 0; i < dist_coefficients_data.size(); ++i) {
-        distCoefficients.at<double>(0, i) = dist_coefficients_data[i];
-    }
-
-    cv::Mat output;
-    cv::undistort(frame, output, cameraMatrix, distCoefficients);
-
-    return output;
-}
-
 
     inline cv::Mat imageCorrection(const cv::Mat& frame) {
         cv::Mat corrected;
@@ -124,16 +121,27 @@ public:
         return frame;
     }
 
-    inline cv::Mat drawContours(const cv::Mat& frame) {
-        cv::Mat result = frame.clone();
-        // Реализуйте логику рисования контуров
-        return result;
+    inline cv::Mat drawContours(cv::Mat& frame, const std::vector<std::vector<cv::Point>>& contours, const std::vector<cv::Point>& coordinates, const std::vector<std::string>& angles) {
+        for (const auto& contour : contours) {
+            cv::drawContours(frame, contours, -1, cv::Scalar(0, 255, 0), 1);
+        }
+
+        for (size_t i = 0; i < coordinates.size(); ++i) {
+            const auto& coord = coordinates[i];
+            const auto& angle = angles[i];
+            if (angle == "above") {
+                cv::circle(frame, coord, 2, cv::Scalar(0, 0, 255), -1);
+            } else if (angle == "under") {
+                cv::circle(frame, coord, 2, cv::Scalar(255, 0, 0), -1);
+            }
+        }
+
+        return frame;
     }
 
 private:
     cv::Mat frame;
 
-    // Переменные для обработки изображения
     double brightnessFactor = 2.0;
     int threshold3 = 17;
     int threshold2 = 65;

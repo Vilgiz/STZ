@@ -31,7 +31,11 @@ void analyzeImages() {
             frame = image.imageCorrection(frame);    // Correct image
             std::vector<cv::Point> coordinates;
             std::vector<std::string> angles;
+            std::vector<std::vector<cv::Point>> contours;
             frame = image.detectContours(frame, coordinates, angles); // Detect contours
+
+            // Draw detected contours and coordinates
+            frame = image.drawContours(frame, contours, coordinates, angles);
 
             camera.show(frame); // Display the processed frame
 
